@@ -4,6 +4,9 @@ const cors = require("cors");
 require("dotenv").config();
 
 const apiRouter = require("./routes/api.router");
+const connectDB = require("./config/db.config");
+
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.static("public"));
@@ -13,6 +16,11 @@ app.get("/", (req, res) => {
 
 app.use("/api", apiRouter);
 
-const listener = app.listen(process.env.PORT || 3000, () => {
-  console.log("Your app is listening on port " + listener.address().port);
-});
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+};
+
+startServer();
