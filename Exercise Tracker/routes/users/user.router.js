@@ -2,12 +2,14 @@ const express = require("express");
 
 const router = express.Router();
 
-router.get("/", (req, res) => {});
+const userController = require("./user.controller");
 
-router.post("/", (req, res) => {});
+router.get("/", userController.getUser);
 
-router.post("/:_id/exercises", (req, res) => {});
+router.post("/", userController.postUser);
 
-router.get("/:_id/logs", (req, res) => {});
+router.post("/:_id/exercises", userController.postExercise);
+
+router.get("/:_id/logs", userController.getLogs);
 
 module.exports = router;
