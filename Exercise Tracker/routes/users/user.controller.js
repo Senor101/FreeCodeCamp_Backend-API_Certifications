@@ -1,6 +1,5 @@
 const User = require("../../model/user.model");
 const Exercise = require("../../model/exercise.model");
-const Log = require("../../model/logs.model");
 
 const getUser = async (req, res, next) => {
   try {
@@ -34,8 +33,9 @@ const postExercise = async (req, res, next) => {
     const { description, duration } = req.body;
     let { date } = req.body;
     if (!date) {
-      let currentDate = new Date();
-      date = currentDate.toDateString();
+      date = new Date();
+    } else {
+      date = new Date(req.body.date);
     }
     const user = await User.findById(userID);
     if (!user) {
@@ -47,12 +47,11 @@ const postExercise = async (req, res, next) => {
       date,
       userId: user._id,
     });
-
     return res.status(201).json({
       username: user.username,
       description,
       duration,
-      date,
+      date: date.toDateString(),
       _id: user._id,
     });
   } catch (error) {
@@ -64,17 +63,38 @@ const getLogs = async (req, res, next) => {
   try {
     const userID = req.params._id;
     const user = await User.findById(userID);
+    let { from, to, limit } = req.query;
+    if (!from && !to) {
+      from = new Date("1800-01-01");
+      to = new Date();
+    }
 
     const exercises = await Exercise.find(
-      { userId: userID },
+      {
+        userId: userID,
+        date: {
+          $gte: new Date(from),
+          $lte: new Date(to),
+        },
+      },
       "description duration date"
-    ).exec();
+    )
+      .limit(limit)
+      .exec();
     const count = await Exercise.countDocuments({ userId: userID }).exec();
+    let exerciseLog = [];
+    for (let exercise of exercises) {
+      exerciseLog.push({
+        description: exercise.description,
+        duration: exercise.duration,
+        date: exercise.date.toDateString(),
+      });
+    }
     const responseLog = {
       username: user.username,
       _id: user._id,
-      count,
-      logs: exercises,
+      count: limit || count,
+      logs: exerciseLog,
     };
     res.status(200).json(responseLog);
   } catch (error) {
