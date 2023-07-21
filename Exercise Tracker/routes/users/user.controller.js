@@ -50,7 +50,7 @@ const postExercise = async (req, res, next) => {
     return res.status(201).json({
       username: user.username,
       description,
-      duration,
+      duration: Number(duration),
       date: date.toDateString(),
       _id: user._id,
     });
@@ -85,16 +85,16 @@ const getLogs = async (req, res, next) => {
     let exerciseLog = [];
     for (let exercise of exercises) {
       exerciseLog.push({
-        description: exercise.description,
-        duration: exercise.duration,
-        date: exercise.date.toDateString(),
+        description: String(exercise.description),
+        duration: Number(exercise.duration),
+        date: String(exercise.date.toDateString()),
       });
     }
     const responseLog = {
       username: user.username,
       _id: user._id,
       count: limit || count,
-      logs: exerciseLog,
+      log: exerciseLog,
     };
     res.status(200).json(responseLog);
   } catch (error) {
