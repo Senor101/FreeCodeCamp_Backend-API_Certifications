@@ -18,8 +18,11 @@ const postUser = async (req, res, next) => {
     if (user) {
       return res.status(200).json(user);
     }
-    const newUser = await User.create({ username: name }, "username _id");
-    return res.status(200).json(newUser);
+    const newUser = await User.create({ username: name });
+    return res.status(200).json({
+      username: newUser.username,
+      _id: newUser._id,
+    });
   } catch (error) {
     console.log(error);
   }
@@ -27,7 +30,7 @@ const postUser = async (req, res, next) => {
 
 const postExercise = async (req, res, next) => {
   try {
-    const userID = req.params.id;
+    const userID = req.params._id;
     const { description, duration } = req.body;
     let { date } = req.body;
     if (!date) {
@@ -35,11 +38,16 @@ const postExercise = async (req, res, next) => {
       date = currentDate.toDateString();
     }
     const user = await User.findById(userID);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
     const newExercise = await Exercise.create({
       description,
       duration,
-      date: date.toDateString(),
+      date,
+      userId: user._id,
     });
+
     return res.status(201).json({
       username: user.username,
       description,
@@ -54,10 +62,21 @@ const postExercise = async (req, res, next) => {
 
 const getLogs = async (req, res, next) => {
   try {
-    const userID = req.params.id;
+    const userID = req.params._id;
     const user = await User.findById(userID);
-    const logs = await Log.find({ userId: userID });
-    res.status(200).json(logs);
+
+    const exercises = await Exercise.find(
+      { userId: userID },
+      "description duration date"
+    ).exec();
+    const count = await Exercise.countDocuments({ userId: userID }).exec();
+    const responseLog = {
+      username: user.username,
+      _id: user._id,
+      count,
+      logs: exercises,
+    };
+    res.status(200).json(responseLog);
   } catch (error) {
     console.log(error);
   }
